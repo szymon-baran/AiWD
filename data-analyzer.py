@@ -7,9 +7,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
 
 # _fileName = "SomervilleHappinessSurvey2015.csv"
-_fileName = "winequality-red.csv"
+_fileName = "winequality-red-3fixed.csv"
 
 
 def isAnyNull(data):
@@ -73,11 +74,15 @@ def supportVectorMachine(data):
     Y = data[classColName].values
     Y = Y.astype("int")
     X = data.drop(labels=[classColName], axis=1)
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=20)
     # X_train, X_val, Y_train, Y_val = train_test_split(X_train, Y_train, test_size=0.2222, random_state=1) # 0.2222 x 0.9 = 0.2
     
-    # model = svm.SVC(kernel='linear')
-    model = svm.SVC(kernel='rbf')
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    model = svm.SVC(kernel='linear')
+    # model = svm.SVC(kernel='rbf')
        
     model.fit(X_train, Y_train)
     prediction = model.predict(X_test)
