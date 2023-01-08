@@ -8,10 +8,23 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
+from random import choice
 
 # _fileName = "SomervilleHappinessSurvey2015.csv"
-_fileName = "winequality-red-3fixed.csv"
+_fileName = "breast-cancer-wisconsin.csv"
 
+def fillEmptyCellsBCW(data):
+    data["Clump Thickness"].fillna(data["Clump Thickness"].median(), inplace=True)
+    data["Uniformity of Cell Size"].fillna(data["Uniformity of Cell Size"].median(), inplace=True)
+    data["Uniformity of Cell Shape"].fillna(data["Uniformity of Cell Shape"].median(), inplace=True)
+    data["Marginal Adhesion"].fillna(data["Marginal Adhesion"].median(), inplace=True)
+    data["Single Epithelial Cell Size"].fillna(data["Single Epithelial Cell Size"].median(), inplace=True)
+    data["Bare Nuclei"].fillna(data["Bare Nuclei"].median(), inplace=True)
+    data["Bland Chromatin"].fillna(data["Bland Chromatin"].median(), inplace=True)
+    data["Normal Nucleoli"].fillna(data["Normal Nucleoli"].median(), inplace=True)
+    data["Mitoses"].fillna(data["Mitoses"].median(), inplace=True)
+    data["quality"].fillna(choice([2, 4]), inplace=True)
+    return data
 
 def isAnyNull(data):
     res = data.isnull().any().any()
@@ -100,7 +113,9 @@ def supportVectorMachine(data):
 
     # print(metrics.classification_report(Y_test, prediction)) 
 
-data = pd.read_csv(_fileName, delimiter=',', header=0, encoding='utf-8', engine='python')
+data = pd.read_csv(_fileName, delimiter=',', header=0, encoding='utf-8', engine='python', na_values='?')
+if (_fileName == "breast-cancer-wisconsin.csv"):
+    data = fillEmptyCellsBCW(data)
 #isAnyNull(data)
 #printValues(data)
 #drawCharts(data)
