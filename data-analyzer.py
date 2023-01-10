@@ -8,10 +8,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 from random import choice
 
-# _fileName = "SomervilleHappinessSurvey2015.csv"
-_fileName = "breast-cancer-wisconsin.csv"
+_fileName = "winequality-red-bool.csv"
+# _fileName = "breast-cancer-wisconsin.csv"
+
 
 def fillEmptyCellsBCW(data):
     data["Clump Thickness"].fillna(data["Clump Thickness"].median(), inplace=True)
@@ -78,12 +80,9 @@ def drawCharts(data):
     plt.plot(X, Y_pred, color='red')
     plt.show()
 
-def supportVectorMachine(data):
-    classColName = ""
-    if (_fileName == "SomervilleHappinessSurvey2015.csv"):
-        classColName = "D"
-    else:
-        classColName = "quality"
+def supportVectorMachine(data, kernelType, degree = 0):
+    print("Kernel: " + kernelType + str(degree if kernelType == 'poly' else ''))
+    classColName = "quality"
     Y = data[classColName].values
     Y = Y.astype("int")
     X = data.drop(labels=[classColName], axis=1)
@@ -94,24 +93,35 @@ def supportVectorMachine(data):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    model = svm.SVC(kernel='linear')
-    # model = svm.SVC(kernel='rbf')
+    model = svm.SVC(kernel=kernelType, degree=degree)
        
     model.fit(X_train, Y_train)
     prediction = model.predict(X_test)
     
     print("Accuracy =", metrics.accuracy_score(Y_test, prediction))
     print("Recall =" , metrics.recall_score(Y_test, prediction, average='macro'))
-   
     
-    cv = KFold(n_splits=5, shuffle=True, random_state=1)  
-    scores_acc = cross_val_score(model, X, Y, cv=cv)    
-    scores_rec = cross_val_score(model, X, Y, cv=cv, scoring='recall_macro')
+    pipeline = Pipeline([('transformer', scaler), ('estimator', model)])
+    
+    cv = KFold(n_splits=5, shuffle=True, random_state=20)  
+    scores_acc = cross_val_score(pipeline, X, Y, cv=cv)    
+    scores_rec = cross_val_score(pipeline, X, Y, cv=cv, scoring='recall_macro')
                                  
-    print("Accuracy: %0.2f (+/- %0.2f)" % (scores_acc.mean(), scores_acc.std() * 2))
-    print("Recall: %0.2f (+/- %0.2f)" % (scores_rec.mean(), scores_rec.std() * 2))
+    print("Accuracy = %0.2f (+/- %0.2f)" % (scores_acc.mean(), scores_acc.std() * 2))
+    print("Recall = %0.2f (+/- %0.2f)\n" % (scores_rec.mean(), scores_rec.std() * 2))
+
 
     # print(metrics.classification_report(Y_test, prediction)) 
+    return scores_acc.mean()
+
+def drawAccuracyPlot(array):
+    plt.plot(array)
+    plt.xticks([0, 1, 2, 3, 4, 5], ['linear', 'rbf', 'poly(dg=2)', 'poly(dg=8)', 'poly(dg=16)', 'sigmoid'])
+    # plt.yticks([0.5, 0.6, 0.7, 0.8, 0.9, 1])
+    plt.xlabel('Kernel')
+    plt.ylabel('Accuracy')
+    plt.title('Wykres zależnosci accuracy od wybranego kernela')
+    plt.show()
 
 data = pd.read_csv(_fileName, delimiter=',', header=0, encoding='utf-8', engine='python', na_values='?')
 if (_fileName == "breast-cancer-wisconsin.csv"):
@@ -119,4 +129,11 @@ if (_fileName == "breast-cancer-wisconsin.csv"):
 #isAnyNull(data)
 #printValues(data)
 #drawCharts(data)
-supportVectorMachine(data)
+array = []
+array.append(supportVectorMachine(data, 'linear'))
+array.append(supportVectorMachine(data, 'rbf'))
+array.append(supportVectorMachine(data, 'poly', 2))
+array.append(supportVectorMachine(data, 'poly', 8))
+array.append(supportVectorMachine(data, 'poly', 16))
+array.append(supportVectorMachine(data, 'sigmoid'))
+drawAccuracyPlot(array)
